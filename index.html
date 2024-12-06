@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title>WebGIS Prakiraan Cuaca dari BMKG</title>
+	<!-- Required meta tags -->
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+	<link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+	<link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
+	<style>
+		body {
+			padding: 0;
+			margin: 0;
+			font-family: 'Roboto', sans-serif;
+		}
+
+		#map {
+			height: 60vh;
+			width: 100%;
+		}
+
+		header {
+			padding: 10px;
+			background: #fff;
+			border-bottom: 1px solid #ddd;
+		}
+
+		table {
+			width: 100%;
+			border-collapse: collapse;
+			margin-top: 10px;
+		}
+
+		table th,
+		table td {
+			border: 1px solid #ddd;
+			padding: 8px;
+			text-align: left;
+		}
+
+		table th {
+			background-color: #f4f4f4;
+		}
+	</style>
+</head>
+
+<body>
+	<header>
+		<h1>WebGIS Prakiraan Cuaca dari BMKG</h1>
+		<p>Tanggal: <span id="date"></span></p>
+	</header>
+	<div id="map"></div>
+	<table>
+		<thead>
+			<tr>
+				<th>No</th>
+				<th>Wilayah</th>
+				<th>Prakiraan Cuaca</th>
+				<th>Suhu (°C)</th>
+			</tr>
+		</thead>
+		<tbody id="weather-table">
+			<!-- Data cuaca akan diisi oleh JavaScript -->
+		</tbody>
+	</table>
+	<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.26.0/axios.min.js"></script>
+	<script>
+		// Inisialisasi peta
+		const map = L.map('map').setView([-6.1751, 106.865], 6);
+
+		// Layer control untuk basemap
+		const baseLayers = {
+			"OpenStreetMap": L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }),
+			"Esri World Imagery": L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19 }),
+			"Google Maps": L.tileLayer('https://mt.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', { maxZoom: 19 })
+		};
+		baseLayers["OpenStreetMap"].addTo(map);
+		L.control.layers(baseLayers).addTo(map);
+
+		// Tampilkan tanggal hari ini
+		document.getElementById('date').textContent = new Date().toLocaleDateString();
+
+		// API BMKG atau API prakiraan cuaca lainnya
+		const weatherAPI = 'https://api.example.com/weather'; // Ganti dengan API yang valid
+
+		// Ambil data prakiraan cuaca
+		axios.get(weatherAPI)
+			.then(response => {
+				const data = response.data; // Sesuaikan format data API
+				const tableBody = document.getElementById('weather-table');
+
+				data.forEach((item, index) => {
+					// Tambahkan marker ke peta
+					const marker = L.marker([item.latitude, item.longitude]).addTo(map);
+					marker.bindPopup(`<b>${item.region}</b><br>Prakiraan: ${item.weather}<br>Suhu: ${item.temperature}°C`);
+
+					// Tambahkan data ke tabel
+					const row = `
+                        <tr>
+                            <td>${index + 1}</td>
+                            <td>${item.region}</td>
+                            <td>${item.weather}</td>
+                            <td>${item.temperature}</td>
+                        </tr>
+                    `;
+					tableBody.innerHTML += row;
+				});
+			})
+			.catch(error => console.error('Gagal memuat data:', error));
+	</script>
+</body>
+
+</html>
